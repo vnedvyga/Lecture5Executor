@@ -13,7 +13,7 @@ public class CopyFiles implements Runnable{
     private File fileInstToCopy;
     private static File destinationFolder;
     private CopyFiles(File fileInstance){fileInstToCopy=fileInstance;}
-    private static CountDownLatch customMonitor;
+    private static CountDownLatch cdl;
     private static final Logger logger = Logger.getLogger("CopyFiles logger");
     public static void copyFiles(File sourceFolder, File destinationFolder, int threads){
         long timeOfCopy = System.currentTimeMillis();
@@ -22,9 +22,9 @@ public class CopyFiles implements Runnable{
         for (File fileInstance : sourceFolder.listFiles()){
             executor.execute(new CopyFiles(fileInstance));
         }
-        customMonitor = new CountDownLatch(sourceFolder.list().length);
+        cdl = new CountDownLatch(sourceFolder.list().length);
         try {
-            customMonitor.await();
+            cdl.await();
             executor.shutdown();
         } catch (InterruptedException e) {
             e.printStackTrace();
@@ -39,7 +39,7 @@ public class CopyFiles implements Runnable{
             String s = "File "+fileInstToCopy.getAbsolutePath()+" was copied with thread: "+Thread.currentThread().getName();
             Files.copy(fileInstToCopy.toPath(), new File(destinationFolder,fileInstToCopy.getName()).toPath(), StandardCopyOption.REPLACE_EXISTING);
             logger.log(Level.INFO, s);
-            customMonitor.countDown();
+            cdl.countDown();
         } catch (IOException e) {
             e.printStackTrace();
         }
